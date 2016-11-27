@@ -7,6 +7,8 @@
 
 // Minimal interval between two consecutive checks
 unsigned long CHECK_INTERVAL = 50;
+// Interval for reporting BNO sensor directions
+unsigned long BNO_REPORT_INTERVAL = 1000;
 
 // Const number of rows of keypad
 const byte KEYPAD_ROWS_CNT = 4;
@@ -25,6 +27,7 @@ const int SNAKE_SIDE_SEL_BTN = A1;
 const int MEMORY_SIDE_SEL = 0x30;
 const int SNAKE_SIDE_SEL = 0x31;
 const int MAZE_SIDE_SEL = 0x32;
+const int NONE_SIDE_SEL = 0x3F;
 
 // 0000xxxx, xxxx represents the index of the keys
 const int MEMORY_SIDE_PREFIX = 0x00;
@@ -108,7 +111,9 @@ void setup() {
   // TODO: Define the default side (none)
 }
 
+byte lastSideSelected = NONE_SIDE_SEL;
 byte lastKeyPadValue = NO_KEYPAD_PRESSED;
+unsigned long lastBnoReportTime;
 
 // Repeated called by the Arduino library
 void loop() {
@@ -118,8 +123,19 @@ void loop() {
 
   // First, handle side selection button pressing events
   if (digitalRead(MEMORY_SIDE_SEL_BTN)) {
-    Serial.write(MEMORY_SIDE_SEL);
-  } /* else if ..., add more sides */
+    if (lastSideSelected != MEMORY_SIDE_SEL) {
+      Serial.write(MEMORY_SIDE_SEL);
+    }
+    lastSideSelected = MEMORY_SIDE_SEL;
+  } else if (digitalRead(SNAKE_SIDE_SEL_BTN)) {
+    if (lastSideSelected != SNAKE_SIDE_SEL) {
+      Serial.write(SNAKE_SIDE_SEL);
+    }
+    lastSideSelected = SNAKE_SIDE_SEL;
+  /* else if ... */
+  } else {
+    lastSideSelected = NONE_SIDE_SEL;
+  }
 
   // Memory side events
   byte keyPadValue = getKeypad();
@@ -130,16 +146,21 @@ void loop() {
   lastKeyPadValue = keyPadValue;
 
   // Then, we can determine which direction should the snake controller go
-  sensors_event_t event; 
-  bno.getEvent(&event);
-  // TODO: Fine-tune the ranges and limit the range (e.g. 45 < x < 90...)
-  if (45.0 < event.orientation.y) {
-    Serial.write(SNAKE_SIDE_PREFIX | IWC_RIGHT);
-  } else if (event.orientation.z < -45.0) {
-    Serial.write(SNAKE_SIDE_PREFIX | IWC_UP);
-  } else if (event.orientation.y < -45.0) {
-    Serial.write(SNAKE_SIDE_PREFIX | IWC_LEFT);
-  } else if (45.0 < event.orientation.z) {
-    Serial.write(SNAKE_SIDE_PREFIX | IWC_DOWN);
+  if (millis() > lastBnoReportTime + BNO_REPORT_INTERVAL) {
+    sensors_event_t event; 
+    bno.getEvent(&event);
+    if (30.0 < event.orientation.y && event.orientation.y < 90.0) {
+      Serial.write(SNAKE_SIDE_PREFIX | IWC_RIGHT);
+      lastBnoReportTime = millis();
+    } else if (-90.0 < event.orientation.z && event.orientation.z < -30.0) {
+      Serial.write(SNAKE_SIDE_PREFIX | IWC_UP);
+      lastBnoReportTime = millis();
+    } else if (-90.0 < event.orientation.y && event.orientation.y < -30.0) {
+      Serial.write(SNAKE_SIDE_PREFIX | IWC_LEFT);
+      lastBnoReportTime = millis();
+    } else if (30.0 < event.orientation.z && event.orientation.z < 90.0) {
+      Serial.write(SNAKE_SIDE_PREFIX | IWC_DOWN);
+      lastBnoReportTime = millis();
+    }
   }
 }
