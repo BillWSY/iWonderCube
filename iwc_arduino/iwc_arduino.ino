@@ -14,11 +14,12 @@ const byte KEYPAD_ROWS_CNT = 4;
 const byte KEYPAD_COLUMNS_CNT = 4;
 
 // Const array of pins used as output for rows of keypad
-const byte KEYPAD_OUT_PINS[ROWS_CNT] = {2, 3, 4, 5};
+const byte KEYPAD_OUT_PINS[KEYPAD_ROWS_CNT] = {2, 3, 4, 5};
 // Const array of pins used as input for columnss of keypad
-const byte KEYPAD_IN_PINS[COLUMNS_CNT] = {6, 7, 8, 9};
+const byte KEYPAD_IN_PINS[KEYPAD_COLUMNS_CNT] = {6, 7, 8, 9};
 
 const int MEMORY_SIDE_SEL_BTN = A0;
+const int SNAKE_SIDE_SEL_BTN = A1;
 
 // Serial protocol
 const int MEMORY_SIDE_SEL = 0x30;
@@ -29,10 +30,10 @@ const int MAZE_SIDE_SEL = 0x32;
 const int MEMORY_SIDE_PREFIX = 0x00;
 
 // 0x10: right, 0x11: up, 0x12: left, 0x13: down
-const int SNAKE_SIZE_PREFIX = 0x10;
+const int SNAKE_SIDE_PREFIX = 0x10;
 
 // 0x20: right, 0x21: up, 0x22: left, 0x23: down
-const int MAZE_SIZE_PREFIX = 0x20;
+const int MAZE_SIDE_PREFIX = 0x20;
 
 // Directions, shared between snake and maze sides
 const int IWC_RIGHT = 0x00;
@@ -117,14 +118,14 @@ void loop() {
 
   // First, handle side selection button pressing events
   if (digitalRead(MEMORY_SIDE_SEL_BTN)) {
-    Serial.print(MEMORY_SIDE_SEL);
+    Serial.write(MEMORY_SIDE_SEL);
   } /* else if ..., add more sides */
- 
+
   // Memory side events
   byte keyPadValue = getKeypad();
   if (lastKeyPadValue != keyPadValue && keyPadValue != NO_KEYPAD_PRESSED) {
     // Send the key index to PC
-    Serial.print(MEMORY_SIDE_PREFIX | (keyPadValue & 0x0F));
+    Serial.write(MEMORY_SIDE_PREFIX | (keyPadValue & 0x0F));
   }
   lastKeyPadValue = keyPadValue;
 
@@ -133,12 +134,12 @@ void loop() {
   bno.getEvent(&event);
   // TODO: Fine-tune the ranges and limit the range (e.g. 45 < x < 90...)
   if (45.0 < event.orientation.y) {
-    Serial.print(SNAKE_SIZE_PREFIX | IWC_RIGHT);
+    Serial.write(SNAKE_SIDE_PREFIX | IWC_RIGHT);
   } else if (event.orientation.z < -45.0) {
-    Serial.print(SNAKE_SIZE_PREFIX | IWC_UP);
+    Serial.write(SNAKE_SIDE_PREFIX | IWC_UP);
   } else if (event.orientation.y < -45.0) {
-    Serial.print(SNAKE_SIZE_PREFIX | IWC_LEFT);
+    Serial.write(SNAKE_SIDE_PREFIX | IWC_LEFT);
   } else if (45.0 < event.orientation.z) {
-    Serial.print(SNAKE_SIZE_PREFIX | IWC_DOWN);
+    Serial.write(SNAKE_SIDE_PREFIX | IWC_DOWN);
   }
 }
