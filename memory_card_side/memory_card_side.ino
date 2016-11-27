@@ -1,5 +1,9 @@
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BNO055.h>
 #include <Key.h>
 #include <Keypad.h>
+#include <utility/imumaths.h>
+#include <Wire.h>
 
 // Minimal interval between two consecutive checks
 unsigned long CHECK_INTERVAL = 50;
@@ -29,6 +33,12 @@ const int SNAKE_SIZE_PREFIX = 0x10;
 
 // 0x20: right, 0x21: up, 0x22: left, 0x23: down
 const int MAZE_SIZE_PREFIX = 0x20;
+
+// Directions, shared between snake and maze sides
+const int IWC_RIGHT = 0x00;
+const int IWC_UP = 0x01;
+const int IWC_LEFT = 0x02;
+const int IWC_DOWN = 0x03;
 
 int currentSide = 0;
 const int MEMORY_SIDE = 0x00;
@@ -60,14 +70,17 @@ byte getKeypad() {
   return result;
 }
 
+Adafruit_BNO055 bno = Adafruit_BNO055(55);
+
 // Runs once when pressing reset
 void setup() {
   // Prepare serial port
   Serial.begin(9600);
 
-  // Makes pin mode of memory side selection button
+  // Makes pin mode of selection button
   pinMode(MEMORY_SIDE_SEL_BTN, INPUT);
-  // TODO: set mode for snake and maze sides
+  pinMode(SNAKE_SIDE_SEL_BTN, INPUT);
+  // TODO: set mode for maze sides
 
   // Prepares keypad
   // Makes pin mode of inputs as input with internal pullup
@@ -78,6 +91,16 @@ void setup() {
   for (byte i = 0; i < KEYPAD_ROWS_CNT; ++i) {
     pinMode(KEYPAD_OUT_PINS[i], OUTPUT);
   }
+
+  // Prepares BNO055
+  if(!bno.begin()) {
+    // TODO: send error code, instead of text to PC (repeatly)
+    Serial.print(
+       "Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    while(1);
+  }
+  delay(1000);
+  bno.setExtCrystalUse(true);
 
   // TODO: Add more sides initialization code here
 
@@ -90,13 +113,11 @@ byte lastKeyPadValue = NO_KEYPAD_PRESSED;
 void loop() {
   delay(CHECK_INTERVAL);
 
-  // TODO: Read from I2C slave, if any result, return the slave result instead
-  // of local checks
+  // TODO: Read from I2C slave, if any result, return the result to the PC
 
   // First, handle side selection button pressing events
   if (digitalRead(MEMORY_SIDE_SEL_BTN)) {
     Serial.print(MEMORY_SIDE_SEL);
-    return;
   } /* else if ..., add more sides */
  
   // Memory side events
@@ -104,10 +125,20 @@ void loop() {
   if (lastKeyPadValue != keyPadValue && keyPadValue != NO_KEYPAD_PRESSED) {
     // Send the key index to PC
     Serial.print(MEMORY_SIDE_PREFIX | (keyPadValue & 0x0F));
-    lastKeyPadValue = keyPadValue;
-    return;
-  } else {
-    lastKeyPadValue = keyPadValue;
   }
+  lastKeyPadValue = keyPadValue;
 
+  // Then, we can determine which direction should the snake controller go
+  sensors_event_t event; 
+  bno.getEvent(&event);
+  // TODO: Fine-tune the ranges and limit the range (e.g. 45 < x < 90...)
+  if (45.0 < event.orientation.y) {
+    Serial.print(SNAKE_SIZE_PREFIX | IWC_RIGHT);
+  } else if (event.orientation.z < -45.0) {
+    Serial.print(SNAKE_SIZE_PREFIX | IWC_UP);
+  } else if (event.orientation.y < -45.0) {
+    Serial.print(SNAKE_SIZE_PREFIX | IWC_LEFT);
+  } else if (45.0 < event.orientation.z) {
+    Serial.print(SNAKE_SIZE_PREFIX | IWC_DOWN);
+  }
 }
