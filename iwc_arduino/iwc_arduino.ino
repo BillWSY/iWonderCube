@@ -8,7 +8,7 @@
 // Minimal interval between two consecutive checks
 unsigned long CHECK_INTERVAL = 50;
 // Interval for reporting BNO sensor directions
-unsigned long BNO_REPORT_INTERVAL = 1000;
+unsigned long BNO_REPORT_INTERVAL = 100;
 
 // Const number of rows of keypad
 const byte KEYPAD_ROWS_CNT = 4;

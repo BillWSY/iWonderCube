@@ -4,7 +4,7 @@ import org.firmata.*;
 
 class SideSelectPage {
   PApplet parent;
-
+  
   int nextSide = SIDE_SEL_PAGE;
   boolean finishedMemory = false;
   boolean finishedSnake = false;

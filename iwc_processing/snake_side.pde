@@ -4,6 +4,7 @@
 // Code for: https://youtu.be/AaGK-fj-BAM
 
 class SnakeSide {
+  PApplet parent;
   float x = 0;
   float y = 0;
   float xspeed = 1;
@@ -13,7 +14,9 @@ class SnakeSide {
   PVector food;
   ArrayList<PVector> tail = new ArrayList<PVector>();
 
-  Snake() {
+  SnakeSide(PApplet theParent) {
+    parent = theParent;
+    pickLocation();
   }
 
   boolean eat(PVector pos) {
@@ -43,8 +46,14 @@ class SnakeSide {
     }
   }
 
+  int divCnt = 0;
   void update() {
     //println(total + " " + tail.size());
+    divCnt = (divCnt + 1) % 4;
+    if (divCnt != 0) {
+      return;
+    }
+    
     if (total > 0) {
       if (total == tail.size() && !tail.isEmpty()) {
         tail.remove(0);
@@ -78,19 +87,31 @@ class SnakeSide {
 
     background(51);
 
-    if (s.eat(food)) {
+    if (eat(food)) {
       pickLocation();
     }
-    s.death();
-    s.update();
-    s.show();
+    death();
+    update();
+    show();
 
     fill(255, 0, 100);
     rect(food.x, food.y, scl, scl);
   }
-
-  void setup() {
-    pickLocation();
+  
+  void goDir(byte direction) {
+    if (direction == IWC_UP) {
+      dir(0, -1);
+    } else if (direction == IWC_DOWN) {
+      dir(0, 1);
+    } else if (direction == IWC_RIGHT) {
+      dir(1, 0);
+    } else if (direction == IWC_LEFT) {
+      dir(-1, 0);
+    }
+  }
+  
+  boolean isFinished() {
+    return total > 1;
   }
 
 }

@@ -42,6 +42,7 @@ void setup() {
   frameRate(10);
   memory_side = new MemorySide(this);
   side_sel_page = new SideSelectPage(this);
+  snake_side = new SnakeSide(this);
 }
 
 void draw() {
@@ -58,7 +59,7 @@ void draw() {
     if (hasCmd && (controlCmd == MEMORY_SIDE_SEL)) {
       side_sel_page.goMemorySide();
     } else if (hasCmd && (controlCmd == SNAKE_SIDE_SEL)) {
-      // side_sel_page.goSnakeSide();
+      side_sel_page.goSnakeSide();
     } else if (hasCmd && (controlCmd == MAZE_SIDE_SEL)) {
       // side_sel_page.goMazeSide();
     }
@@ -78,7 +79,7 @@ void draw() {
       currentSide = SIDE_SEL_PAGE;
     }
     if (hasCmd && ((controlCmd & 0xF0) == SNAKE_SIDE_PREFIX)) {
-      snake_side.goDir(controlCmd & 0x0F);
+      snake_side.goDir((byte)(controlCmd & 0x0F));
     }
     snake_side.draw();
   } else if (currentSide == MAZE_SIDE) {
