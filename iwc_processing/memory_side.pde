@@ -1,7 +1,6 @@
 import processing.sound.*;
 import cc.arduino.*;
 import org.firmata.*;
-import processing.serial.*;
 
 class MemorySide {
 
@@ -35,7 +34,12 @@ class MemorySide {
   int matched_cnt = 0;
 
   int lastSoundLabel = -1;
-  int lastkeyLabel = -1;
+  int lastKeyLabel = -1;
+  PApplet parent;
+  
+  public MemorySide(PApplet theParent) {
+    parent = theParent;
+  }
 
   public void startPlay(int soundLabel) {
     // If play has not ended, and current sound to play is different from the
@@ -47,7 +51,7 @@ class MemorySide {
     // If the last play has finished or the user requested to play a new sound,
     // we just play it and save its labels / expected end timestamp
     if (System.currentTimeMillis() > playEnd || lastSoundLabel != soundLabel) { 
-      sound = new SoundFile(this, AUDIO_FILENAMES[soundLabel]);
+      sound = new SoundFile(parent, AUDIO_FILENAMES[soundLabel]);
       sound.play();
       lastSoundLabel = soundLabel;
       playEnd = System.currentTimeMillis() + (long)(sound.duration() * 1000);
@@ -56,16 +60,25 @@ class MemorySide {
 
   void draw() {
     // Draw a 4x4 matrix, and differentiate those has been matched
-    ellipse(56, 46, 55, 55);
+    for (int i = 0; i < 4; ++ i) {
+      for (int j = 0; j < 4; ++ j) {
+        if (matched[j * 4 + i]) {
+          fill(255, 0, 0);
+        } else {
+          fill(0, 0, 255);
+        }
+        ellipse(100 + i * 100, 100 + j * 100, 80, 80);
+      }
+    }
   }
 
   void keypadDown(int keyLabel) {
     if (matched[keyLabel] == false) {
       startPlay(keyLabel);
-      if (AUDIO_LABELS[keyLabelOriginal] == AUDIO_LABELS[keyLabel] 
-          && keyLabelOriginal != keyLabel) {
+      if (lastKeyLabel >= 0 && AUDIO_LABELS[lastKeyLabel] == AUDIO_LABELS[keyLabel]
+          && lastKeyLabel != keyLabel) {
         matched[keyLabel] = true;
-        matched[keyLabelOriginal] = true;
+        matched[lastKeyLabel] = true;
         matched_cnt += 2;
         if (matched_cnt == 16) {
           finished = true;
@@ -73,10 +86,11 @@ class MemorySide {
         }
       }
     }
+    lastKeyLabel = keyLabel;
   }
 
   // Getter for finishing status
-  bool isFinished() {
+  boolean isFinished() {
     return finished;
   }
 }
