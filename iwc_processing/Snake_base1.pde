@@ -9,6 +9,8 @@ class Snake {
   float xspeed = 1;
   float yspeed = 0;
   int total = 0;
+  int scl = 20;
+  PVector food;
   ArrayList<PVector> tail = new ArrayList<PVector>();
 
   Snake() {
@@ -64,4 +66,31 @@ class Snake {
     }
     rect(x, y, scl, scl);
   }
+
+  void pickLocation() {
+    int cols = width/scl;
+    int rows = height/scl;
+    food = new PVector(floor(random(cols)), floor(random(rows)));
+    food.mult(scl);
+  }
+
+  void draw() {
+
+    background(51);
+
+    if (s.eat(food)) {
+      pickLocation();
+    }
+    s.death();
+    s.update();
+    s.show();
+
+    fill(255, 0, 100);
+    rect(food.x, food.y, scl, scl);
+  }
+
+  void setup() {
+    pickLocation();
+  }
+
 }

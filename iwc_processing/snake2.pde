@@ -4,22 +4,13 @@
 // Code for: https://youtu.be/AaGK-fj-BAM
 
 Snake s;
-int scl = 20;
-
-PVector food;
 
 void setup() {
-  //size(600, 600);
-  s = new Snake();
+  size(600, 600);
   frameRate(10);
-  pickLocation();
-}
 
-void pickLocation() {
-  int cols = width/scl;
-  int rows = height/scl;
-  food = new PVector(floor(random(cols)), floor(random(rows)));
-  food.mult(scl);
+  // Prepare Snake
+  s = new Snake();
 }
 
 void mousePressed() {
@@ -27,23 +18,7 @@ void mousePressed() {
 }
 
 void draw() {
-  background(51);
-
-  if (s.eat(food)) {
-    pickLocation();
-  }
-  s.death();
-  s.update();
-  s.show();
-
-
-  fill(255, 0, 100);
-  rect(food.x, food.y, scl, scl);
 }
-
-
-
-
 
 void keyPressed() {
   if (keyCode == UP) {
