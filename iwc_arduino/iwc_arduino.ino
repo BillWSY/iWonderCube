@@ -5,10 +5,14 @@
 #include <utility/imumaths.h>
 #include <Wire.h>
 
+const int SLAVE_ADDR = 0x08;
+
 // Minimal interval between two consecutive checks
 unsigned long CHECK_INTERVAL = 50;
 // Interval for reporting BNO sensor directions
 unsigned long BNO_REPORT_INTERVAL = 100;
+// Interval for reporting photo sensor directions
+unsigned long PHOTO_REPORT_INTERVAL = 100;
 
 // Const number of rows of keypad
 const byte KEYPAD_ROWS_CNT = 4;
@@ -22,8 +26,12 @@ const byte KEYPAD_IN_PINS[KEYPAD_COLUMNS_CNT] = {6, 7, 8, 9};
 
 const int MEMORY_SIDE_SEL_BTN = A0;
 const int SNAKE_SIDE_SEL_BTN = A1;
+const int MAZE_SIDE_SEL_BTN = A2;
 
 // Serial protocol
+
+const int NOP = 0xFF;
+
 const int MEMORY_SIDE_SEL = 0x30;
 const int SNAKE_SIDE_SEL = 0x31;
 const int MAZE_SIDE_SEL = 0x32;
@@ -80,11 +88,12 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55);
 void setup() {
   // Prepare serial port
   Serial.begin(9600);
+  Wire.begin();
 
   // Makes pin mode of selection button
   pinMode(MEMORY_SIDE_SEL_BTN, INPUT);
   pinMode(SNAKE_SIDE_SEL_BTN, INPUT);
-  // TODO: set mode for maze sides
+  pinMode(MAZE_SIDE_SEL_BTN, INPUT);
 
   // Prepares keypad
   // Makes pin mode of inputs as input with internal pullup
@@ -107,19 +116,29 @@ void setup() {
   bno.setExtCrystalUse(true);
 
   // TODO: Add more sides initialization code here
-
-  // TODO: Define the default side (none)
 }
 
 byte lastSideSelected = NONE_SIDE_SEL;
 byte lastKeyPadValue = NO_KEYPAD_PRESSED;
 unsigned long lastBnoReportTime;
+unsigned long lastPhotoReportTime;
 
 // Repeated called by the Arduino library
 void loop() {
   delay(CHECK_INTERVAL);
 
-  // TODO: Read from I2C slave, if any result, return the result to the PC
+  // Then, we can determine which direction should the snake controller go
+  if (millis() > lastPhotoReportTime + PHOTO_REPORT_INTERVAL) {
+    // Read from I2C slave, if any result, return the result to the PC
+    Wire.requestFrom(SLAVE_ADDR, 1);  // request 1 byte from slave device
+    if (Wire.available()) {
+      byte c = Wire.read();
+      if (c != NOP) {
+        Serial.write(c);
+        lastPhotoReportTime = millis();
+      }
+    }
+  }
 
   // First, handle side selection button pressing events
   if (digitalRead(MEMORY_SIDE_SEL_BTN)) {
@@ -132,7 +151,11 @@ void loop() {
       Serial.write(SNAKE_SIDE_SEL);
     }
     lastSideSelected = SNAKE_SIDE_SEL;
-  /* else if ... */
+  } else if (digitalRead(MAZE_SIDE_SEL_BTN)) {
+    if (lastSideSelected != MAZE_SIDE_SEL) {
+      Serial.write(MAZE_SIDE_SEL);
+    }
+    lastSideSelected = MAZE_SIDE_SEL;
   } else {
     lastSideSelected = NONE_SIDE_SEL;
   }

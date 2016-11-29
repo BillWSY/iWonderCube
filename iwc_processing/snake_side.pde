@@ -111,7 +111,7 @@ class SnakeSide {
   }
   
   boolean isFinished() {
-    return total > 1;
+    return total > 0;
   }
 
 }

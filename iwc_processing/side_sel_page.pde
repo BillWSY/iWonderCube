@@ -30,26 +30,31 @@ class SideSelectPage {
   }
 
   void draw() {
-    if (finishedMemory) {
-      fill(255, 0, 0);
+    if (finishedMemory && finishedSnake && finishedMaze) {
+      fill(0, 255, 0);
+      ellipse(400, 400, 200, 200);
     } else {
-      fill(0, 0, 255);
+      if (finishedMemory) {
+        fill(255, 0, 0);
+      } else {
+        fill(0, 0, 255);
+      }
+      ellipse(100, 100, 120, 120);
+      
+      if (finishedSnake) {
+        fill(255, 0, 0);
+      } else {
+        fill(0, 0, 255);
+      }
+      ellipse(250, 250, 120, 120);
+      
+      if (finishedMaze) {
+        fill(255, 0, 0);
+      } else {
+        fill(0, 0, 255);
+      }
+      ellipse(400, 400, 120, 120);
     }
-    ellipse(100, 100, 120, 120);
-    
-    if (finishedSnake) {
-      fill(255, 0, 0);
-    } else {
-      fill(0, 0, 255);
-    }
-    ellipse(250, 250, 120, 120);
-    
-    if (finishedMaze) {
-      fill(255, 0, 0);
-    } else {
-      fill(0, 0, 255);
-    }
-    ellipse(400, 400, 120, 120);
   }
   
   void goMemorySide() {

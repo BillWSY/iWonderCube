@@ -31,6 +31,7 @@ int currentSide = SIDE_SEL_PAGE;
 SideSelectPage side_sel_page;
 MemorySide memory_side;
 SnakeSide snake_side;
+MazeSide maze_side;
 
 Serial serialPort;
 
@@ -43,6 +44,7 @@ void setup() {
   memory_side = new MemorySide(this);
   side_sel_page = new SideSelectPage(this);
   snake_side = new SnakeSide(this);
+  maze_side = new MazeSide(this);
 }
 
 void draw() {
@@ -61,7 +63,7 @@ void draw() {
     } else if (hasCmd && (controlCmd == SNAKE_SIDE_SEL)) {
       side_sel_page.goSnakeSide();
     } else if (hasCmd && (controlCmd == MAZE_SIDE_SEL)) {
-      // side_sel_page.goMazeSide();
+      side_sel_page.goMazeSide();
     }
     side_sel_page.draw();
   } else if (currentSide == MEMORY_SIDE) {
@@ -83,13 +85,13 @@ void draw() {
     }
     snake_side.draw();
   } else if (currentSide == MAZE_SIDE) {
-    // if (maze_side.isFinished()) {
-      // side_sel_page.setMazeFinished();
-      // currentSide = SIDE_SEL_PAGE;
-    // }
-    if (hasCmd && ((controlCmd & 0xF0) == MAZE_SIDE_PREFIX)) {
-      // maze_side.goDir(controlCmd & 0x0F);
+    if (maze_side.isFinished()) {
+      side_sel_page.setMazeFinished();
+      currentSide = SIDE_SEL_PAGE;
     }
-    // maze_side.draw();
+    if (hasCmd && ((controlCmd & 0xF0) == MAZE_SIDE_PREFIX)) {
+      maze_side.goDir((byte)(controlCmd & 0x0F));
+    }
+    maze_side.draw();
   }
 }
